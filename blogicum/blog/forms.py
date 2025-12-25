@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
+from django.utils import timezone
 
 from .models import Post
 
@@ -27,6 +28,18 @@ class PostForm(forms.ModelForm):
                 'type': 'datetime-local',
             })
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk and self.instance.pub_date:
+            pub_date = self.instance.pub_date
+            if timezone.is_aware(pub_date):
+                pub_date = timezone.localtime(pub_date)
+            formatted_date = pub_date.strftime('%Y-%m-%dT%H:%M')
+            self.initial['pub_date'] = formatted_date
+        for field_name in self.fields:
+            self.fields[field_name].widget.attrs['class'] = 'form-control'
 
 
 class CommentForm(forms.ModelForm):
